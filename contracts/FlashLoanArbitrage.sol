@@ -5,6 +5,7 @@ pragma solidity 0.8.10;
 import "https://github.com/aave/aave-v3-core/blob/master/contracts/flashloan/base/FlashLoanSimpleReceiverBase.sol";
 import "https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPoolAddressesProvider.sol";
 import "https://github.com/aave/aave-v3-core/blob/master/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";  // Import OpenZeppelin's Ownable contract
 
 /**
  * @title FlashLoanArbitrage
@@ -12,13 +13,10 @@ import "https://github.com/aave/aave-v3-core/blob/master/contracts/dependencies/
  *         Dieser Vertrag kann einen Flash Loan aufnehmen, Arbitrage-Transaktionen durchführen
  *         und den Flash Loan innerhalb derselben Transaktion zurückzahlen.
  */
-contract FlashLoanArbitrage is FlashLoanSimpleReceiverBase {
-    // Owner des Vertrags (kann z.B. der Bot sein, der den Flash Loan auslöst)
-    address payable public owner;
-
+contract FlashLoanArbitrage is FlashLoanSimpleReceiverBase, Ownable {
     // Konstruktor setzt den Aave Pool Addresses Provider (wird z.B. beim Deployment übergeben)
     constructor(address _addressProvider) FlashLoanSimpleReceiverBase(IPoolAddressesProvider(_addressProvider)) {
-        owner = payable(msg.sender);
+        transferOwnership(msg.sender);  // Set the contract deployer as the owner
     }
 
     /**
@@ -26,8 +24,10 @@ contract FlashLoanArbitrage is FlashLoanSimpleReceiverBase {
      * @param _token  Die Adresse des Assets (Tokens), das geliehen werden soll (z.B. WETH).
      * @param _amount Der Betrag, der als Flash Loan geliehen werden soll.
      */
-    function requestFlashLoan(address _token, uint256 _amount) external {
-        require(msg.sender == owner, "Nur der Owner kann den Flash Loan anfordern");
+    function requestFlashLoan(address _token, uint256 _amount) external onlyOwner {
+        require(_amount > 0, "Betrag muss größer als 0 sein");
+        require(_token != address(0), "Ungültige Token-Adresse");
+
         // Adresse dieses Vertrags als Empfänger des Flash Loans
         address receiver = address(this);
         // Parameters (können zusätzliche Daten für Arbitrage enthalten; hier leer)
@@ -62,6 +62,8 @@ contract FlashLoanArbitrage is FlashLoanSimpleReceiverBase {
         address initiator,
         bytes calldata params
     ) external override returns (bool) {
+        require(amount > 0, "Der geliehene Betrag muss größer als 0 sein");
+        
         // *** Arbitrage-Logik würde hier implementiert werden. ***
         // Zum Beispiel: Trade mit dem geliehenen Betrag zwischen DEXen durchführen,
         // um Profit zu erzielen. (Dieser Teil ist hier nur angedeutet und muss je
