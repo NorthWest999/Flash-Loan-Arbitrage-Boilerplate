@@ -1,8 +1,16 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
+const helmet = require('helmet');
+const morgan = require('morgan');
+
 const app = express();
 const port = process.env.PORT || 3000;
-const path = require('path');
+
+// Middleware
+app.use(helmet()); // Set security-related HTTP headers
+app.use(morgan('combined')); // HTTP request logging
+app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
 
 // Example static bot status data
 const botStatus = {
@@ -21,6 +29,12 @@ const botStatus = {
 // Set view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Validate environment variables
+if (!process.env.PORT) {
+  console.error('Error: PORT environment variable is not set.');
+  process.exit(1);
+}
 
 // Route for the dashboard
 app.get('/', (req, res) => {
