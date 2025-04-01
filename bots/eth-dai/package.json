@@ -1,0 +1,13 @@
+{
+  "name": "eth-dai-bot",
+  "version": "1.0.0",
+  "description": "Arbitrage bot for ETH-DAI pair",
+  "main": "arbBot.js",
+  "scripts": {
+    "start": "node arbBot.js"
+  },
+  "dependencies": {
+    "ethers": "^5.7.2",
+    "dotenv": "^10.0.0"
+  }
+}
