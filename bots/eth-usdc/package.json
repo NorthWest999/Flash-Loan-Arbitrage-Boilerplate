@@ -4,10 +4,28 @@
   "description": "Arbitrage bot for ETH-USDC pair",
   "main": "arbBot.js",
   "scripts": {
-    "start": "node arbBot.js"
+    "start": "node arbBot.js",
+    "test": "mocha",  // Assuming you use Mocha for testing
+    "lint": "eslint .",  // Assuming you use ESLint for linting
+    "dev": "nodemon arbBot.js"  // For development
   },
   "dependencies": {
     "ethers": "^5.7.2",
     "dotenv": "^10.0.0"
-  }
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15",
+    "eslint": "^7.32.0",
+    "mocha": "^9.1.3"  // If you use Mocha for testing
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NorthWest999/Flash-Loan-Arbitrage-Boilerplate.git"
+  },
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/NorthWest999/Flash-Loan-Arbitrage-Boilerplate/issues"
+  },
+  "homepage": "https://github.com/NorthWest999/Flash-Loan-Arbitrage-Boilerplate#readme"
 }
