@@ -1,0 +1,3 @@
+[default]
+src = "contracts"       # Ordner mit den Solidity-Verträgen
+out = "out"             # Ordner für kompilierte Output-Dateien (ABIs, BINs)
