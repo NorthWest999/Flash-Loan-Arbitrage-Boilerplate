@@ -1,3 +1,30 @@
 [default]
-src = "contracts"       # Ordner mit den Solidity-Verträgen
-out = "out"             # Ordner für kompilierte Output-Dateien (ABIs, BINs)
+src = "contracts"       # Directory with Solidity contracts
+out = "out"             # Directory for compiled output files (ABIs, BINs)
+
+# Specify the Solidity compiler version
+solc = "0.8.17"
+
+# Enable optimizer and set runs
+optimizer = true
+optimizer_runs = 200
+
+# Additional directory for libraries
+lib = "lib"
+
+[dev]
+# Configuration for development environment
+src = "contracts"
+out = "out/dev"
+solc = "0.8.17"
+optimizer = true
+optimizer_runs = 200
+lib = "lib"
+
+[prod]
+# Configuration for production environment
+src = "contracts"
+out = "out/prod"
+solc = "0.8.17"
+optimizer = false
+lib = "lib"
