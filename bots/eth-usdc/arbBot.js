@@ -19,6 +19,8 @@ const borrowAmountEth = parseFloat(process.env.BORROW_AMOUNT_ETH || "1");
 const borrowAmountWei = ethers.utils.parseEther(borrowAmountEth.toString());
 const priceDiffThreshold = Number(process.env.PRICE_DIFF_THRESHOLD || "0");
 
+const CHECK_INTERVAL_MS = 30000; // Intervallzeit in Millisekunden
+
 // Simulierte Preisabfrage (ETH in USDC auf zwei DEXen)
 async function getPrices() {
     // Beispiel: zwei verschiedene Preise für 1 ETH in USDC simulieren
@@ -45,5 +47,20 @@ async function checkArbitrageOpportunity() {
     }
 }
 
-console.log("Starte ETH-USDC Arbitrage-Bot...");
-setInterval(checkArbitrageOpportunity, 30000);
+async function main() {
+    console.log("Starte ETH-USDC Arbitrage-Bot...");
+
+    // Überprüfen, ob alle erforderlichen Umgebungsvariablen geladen sind
+    if (!process.env.RPC_URL || !process.env.PRIVATE_KEY || !process.env.FLASHLOAN_CONTRACT || !process.env.ASSET_BORROW || !process.env.STABLE_ASSET) {
+        console.error("Fehlende Umgebungsvariablen. Bitte überprüfen Sie die .env-Datei.");
+        process.exit(1);
+    }
+
+    // Starte das Intervall für die Arbitrage-Überprüfung
+    setInterval(checkArbitrageOpportunity, CHECK_INTERVAL_MS);
+}
+
+// Führe das Hauptprogramm aus
+main().catch(error => {
+    console.error("[ETH-USDC] Fehler beim Starten des Bots:", error);
+});
