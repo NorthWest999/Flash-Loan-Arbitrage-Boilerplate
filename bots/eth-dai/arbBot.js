@@ -3,6 +3,20 @@
 require('dotenv').config();  // .env im aktuellen Arbeitsverzeichnis laden
 
 const ethers = require('ethers');
+const winston = require('winston');
+
+// Logger konfigurieren
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.printf(info => `${info.timestamp} [${info.level.toUpperCase()}]: ${info.message}`)
+    ),
+    transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'arbBot.log' })
+    ]
+});
 
 // RPC-Provider und Wallet initialisieren
 const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
@@ -10,7 +24,7 @@ const wallet   = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 // FlashLoan Contract-Instanz erstellen (ABI mit mindestens der benötigten Funktion)
 const FLASHLOAN_ABI = [
-  "function requestFlashLoan(address _token, uint256 _amount) external"
+    "function requestFlashLoan(address _token, uint256 _amount) external"
 ];
 const flashLoanContract = new ethers.Contract(process.env.FLASHLOAN_CONTRACT, FLASHLOAN_ABI, wallet);
 
@@ -22,6 +36,7 @@ const stableAsset   = process.env.STABLE_ASSET;      // z.B. DAI-Adresse
 const borrowAmountEth = parseFloat(process.env.BORROW_AMOUNT_ETH || "1");  // z.B. 1 ETH
 const borrowAmountWei = ethers.utils.parseEther(borrowAmountEth.toString());
 const priceDiffThreshold = Number(process.env.PRICE_DIFF_THRESHOLD || "0"); // z.B. 5 (DAI Unterschied)
+const checkInterval = Number(process.env.CHECK_INTERVAL || "30000"); // z.B. 30000 ms
 
 // Simulierte Preisabfrage (in echtem Bot: API oder On-Chain-Preisabfragen nutzen)
 async function getPrices() {
@@ -36,24 +51,24 @@ async function getPrices() {
 async function checkArbitrageOpportunity() {
     try {
         const { priceDexA, priceDexB } = await getPrices();
-        console.log(`[ETH-DAI] Preis DEX A: ${priceDexA} DAI, Preis DEX B: ${priceDexB} DAI`);
+        logger.info(`Preis DEX A: ${priceDexA} DAI, Preis DEX B: ${priceDexB} DAI`);
 
         // Prüft, ob die Preisdifferenz den Schwellenwert überschreitet
         if (priceDexB - priceDexA > priceDiffThreshold) {
-            console.log("[ETH-DAI] Arbitrage-Möglichkeit erkannt! Starte Flash Loan...");
+            logger.info("Arbitrage-Möglichkeit erkannt! Starte Flash Loan...");
 
             // Flash Loan über Smart Contract anfordern
             const tx = await flashLoanContract.requestFlashLoan(assetToBorrow, borrowAmountWei);
             await tx.wait();  // auf Bestätigung warten
-            console.log("[ETH-DAI] Flash-Loan-Transaktion gesendet. TX Hash:", tx.hash);
+            logger.info(`Flash-Loan-Transaktion gesendet. TX Hash: ${tx.hash}`);
         } else {
-            console.log("[ETH-DAI] Keine profitable Arbitrage-Möglichkeit gefunden.");
+            logger.info("Keine profitable Arbitrage-Möglichkeit gefunden.");
         }
     } catch (error) {
-        console.error("[ETH-DAI] Fehler beim Prüfen der Arbitrage:", error);
+        logger.error(`Fehler beim Prüfen der Arbitrage: ${error}`);
     }
 }
 
 // Starte den Bot mit Intervall
-console.log("Starte ETH-DAI Arbitrage-Bot...");
-setInterval(checkArbitrageOpportunity, 30000);  // alle 30 Sekunden prüfen
+logger.info("Starte ETH-DAI Arbitrage-Bot...");
+setInterval(checkArbitrageOpportunity, checkInterval);  // konfigurierbares Intervall
