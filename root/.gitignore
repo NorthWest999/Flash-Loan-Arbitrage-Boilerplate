@@ -44,3 +44,7 @@ jspm_packages/
 !.yarn/plugins
 !.yarn/sdks
 !.yarn/versions
+
+# Open Interpreter
+open-interpreter/chat_memory.db
+open-interpreter/chat_history.json
