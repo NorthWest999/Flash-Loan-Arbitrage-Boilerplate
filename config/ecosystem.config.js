@@ -1,54 +1,45 @@
 require('dotenv').config();
 
+const isDev = process.env.NODE_ENV === "development";
+
 module.exports = {
   apps: [
+    // 🔁 ETH-DAI Arbitrage Bot
     {
       name: "bot-eth-dai",
-      script: "bots/eth-dai/arbBot.js",
+      script: "arbBot.js",
       cwd: "bots/eth-dai",
+      watch: isDev,
       env: {
-        NODE_ENV: process.env.NODE_ENV || "production"
-      },
-      env_production: {
-        NODE_ENV: "production"
-      },
-      env_development: {
-        NODE_ENV: "development"
-      },
-      watch: process.env.NODE_ENV === "development"
+        NODE_ENV: process.env.NODE_ENV || "production",
+        PRIVATE_KEY: process.env.PRIVATE_KEY,
+        INFURA_PROJECT_ID: process.env.INFURA_PROJECT_ID
+      }
     },
+
+    // 💸 ETH-USDC Arbitrage Bot
     {
       name: "bot-eth-usdc",
-      script: "bots/eth-usdc/arbBot.js",
+      script: "arbBot.js",
       cwd: "bots/eth-usdc",
+      watch: isDev,
       env: {
-        NODE_ENV: process.env.NODE_ENV || "production"
-      },
-      env_production: {
-        NODE_ENV: "production"
-      },
-      env_development: {
-        NODE_ENV: "development"
-      },
-      watch: process.env.NODE_ENV === "development"
+        NODE_ENV: process.env.NODE_ENV || "production",
+        PRIVATE_KEY: process.env.PRIVATE_KEY,
+        INFURA_PROJECT_ID: process.env.INFURA_PROJECT_ID
+      }
     },
+
+    // 📊 Dashboard / API
     {
       name: "dashboard",
-      script: "dashboard/server.js",
+      script: "server.js",
       cwd: "dashboard",
+      watch: isDev,
       env: {
         NODE_ENV: process.env.NODE_ENV || "production",
         PORT: process.env.PORT || 3000
-      },
-      env_production: {
-        NODE_ENV: "production",
-        PORT: 3000
-      },
-      env_development: {
-        NODE_ENV: "development",
-        PORT: 3000
-      },
-      watch: process.env.NODE_ENV === "development"
+      }
     }
   ]
 };
