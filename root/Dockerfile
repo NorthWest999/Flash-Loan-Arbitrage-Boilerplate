@@ -1,18 +1,23 @@
-# Nutze ein Node.js-Image
-FROM node:18
+# Use a smaller Node.js image
+FROM node:18-slim
 
-# Arbeitsverzeichnis im Container
+# Set the working directory
 WORKDIR /app
 
-# Kopiere alles rein
-COPY . .
+# Copy package.json and package-lock.json to leverage Docker caching
+COPY package*.json ./
 
-# Wechsel in bots/ und installiere Abhängigkeiten
-WORKDIR /app/bots
+# Install dependencies
 RUN npm install
 
-# Setze Environment auf Production
+# Copy the rest of the application code
+COPY . .
+
+# Set the working directory to /app/bots
+WORKDIR /app/bots
+
+# Set environment to production
 ENV NODE_ENV=production
 
-# Starte über PM2
+# Start the application using PM2
 CMD ["pm2-runtime", "../config/ecosystem.config.js"]
