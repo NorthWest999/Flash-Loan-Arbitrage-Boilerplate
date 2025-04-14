@@ -1,48 +1,61 @@
+require("dotenv").config();
 const { ethers } = require("ethers");
-const ChainlinkABI = require("./ChainlinkPriceConsumerABI.json"); // ABI des Chainlink-Contracts
-const FlashLoanArbitrageABI = require("./FlashLoanArbitrageABI.json"); // ABI des FlashLoanArbitrage-Contracts
+const axios = require("axios");
 
-// Ethereum Provider (z.B. Infura oder Alchemy)
-const provider = new ethers.providers.JsonRpcProvider("https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID");
+// Lade Umgebungsvariablen
+const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID;
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const CHAINLINK_CONTRACT_ADDRESS = process.env.CHAINLINK_CONTRACT_ADDRESS;
+const FLASH_LOAN_ARBITRAGE_CONTRACT_ADDRESS = process.env.FLASH_LOAN_ARBITRAGE_CONTRACT_ADDRESS;
+
+// Ethereum Provider (z.B. Infura)
+const provider = new ethers.providers.JsonRpcProvider(`https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`);
 
 // Wallet und Signer
-const wallet = new ethers.Wallet("PRIVATE_KEY", provider);
+const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
-// Adressen der Smart Contracts
-const chainlinkPriceConsumerAddress = "CHAINLINK_CONTRACT_ADDRESS"; // z.B. ETH/USD Feed
-const flashLoanArbitrageAddress = "FLASH_LOAN_ARBITRAGE_CONTRACT_ADDRESS";
+// ABIs der Contracts
+const ChainlinkABI = [
+  // Minimal ABI für Price Feed
+  "function getLatestPrice() view returns (int256)"
+];
+const FlashLoanArbitrageABI = [
+  // Minimal ABI für Arbitrage Contract
+  "function executeArbitrage(uint256 priceA, uint256 priceB) external"
+];
 
-// Instanzen der Smart Contracts
-const priceConsumer = new ethers.Contract(chainlinkPriceConsumerAddress, ChainlinkABI, provider);
-const flashLoanArbitrage = new ethers.Contract(flashLoanArbitrageAddress, FlashLoanArbitrageABI, wallet);
+// Contract-Instanzen
+const priceConsumer = new ethers.Contract(CHAINLINK_CONTRACT_ADDRESS, ChainlinkABI, provider);
+const flashLoanArbitrage = new ethers.Contract(FLASH_LOAN_ARBITRAGE_CONTRACT_ADDRESS, FlashLoanArbitrageABI, wallet);
 
-// Funktion zur Überprüfung von Arbitrage-Möglichkeiten
 async function checkArbitrage() {
-    try {
-        // Beispiel: Abruf von Preisen
-        const priceA = await priceConsumer.getLatestPrice(); // Chainlink-Preis A
-        const priceB = await fetch("https://api.exchangeB.com/price"); // Preis von einer anderen API
+  try {
+    // Abrufen der Preise
+    const priceA = await priceConsumer.getLatestPrice(); // Chainlink-Preis A
+    const response = await axios.get("https://api.exchangeB.com/price"); // API von Exchange B
+    const priceB = ethers.utils.parseUnits(response.data.price.toString(), 8); // Konvertiere Preis von Exchange B
 
-        console.log(`Price A: ${ethers.utils.formatUnits(priceA, 8)}, Price B: ${priceB}`);
+    console.log(`Price A (Chainlink): ${ethers.utils.formatUnits(priceA, 8)}`);
+    console.log(`Price B (Exchange B): ${ethers.utils.formatUnits(priceB, 8)}`);
 
-        // Arbitrage-Bedingung prüfen
-        if (priceA < priceB) {
-            console.log("Arbitrage opportunity detected!");
+    // Arbitrage-Bedingung prüfen
+    if (priceA < priceB) {
+      console.log("Arbitrage opportunity detected!");
 
-            // Smart Contract aufrufen, um Arbitrage auszuführen
-            const tx = await flashLoanArbitrage.executeArbitrage(priceA, priceB, {
-                gasLimit: 300000,
-            });
-            console.log(`Transaction sent: ${tx.hash}`);
-            await tx.wait();
-            console.log("Arbitrage executed successfully!");
-        } else {
-            console.log("No arbitrage opportunity.");
-        }
-    } catch (error) {
-        console.error("Error checking arbitrage:", error);
+      // Transaktion senden, um Arbitrage auszuführen
+      const tx = await flashLoanArbitrage.executeArbitrage(priceA, priceB, {
+        gasLimit: 300000
+      });
+      console.log(`Transaction sent: ${tx.hash}`);
+      await tx.wait();
+      console.log("Arbitrage executed successfully!");
+    } else {
+      console.log("No arbitrage opportunity.");
     }
+  } catch (error) {
+    console.error("Error in checkArbitrage:", error.message);
+  }
 }
 
-// Arbitrage-Bot in Intervallen ausführen
+// Bot in Intervallen laufen lassen
 setInterval(checkArbitrage, 60000); // Alle 60 Sekunden
