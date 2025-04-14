@@ -1,0 +1,48 @@
+const { ethers } = require("ethers");
+const ChainlinkABI = require("./ChainlinkPriceConsumerABI.json"); // ABI des Chainlink-Contracts
+const FlashLoanArbitrageABI = require("./FlashLoanArbitrageABI.json"); // ABI des FlashLoanArbitrage-Contracts
+
+// Ethereum Provider (z.B. Infura oder Alchemy)
+const provider = new ethers.providers.JsonRpcProvider("https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID");
+
+// Wallet und Signer
+const wallet = new ethers.Wallet("PRIVATE_KEY", provider);
+
+// Adressen der Smart Contracts
+const chainlinkPriceConsumerAddress = "CHAINLINK_CONTRACT_ADDRESS"; // z.B. ETH/USD Feed
+const flashLoanArbitrageAddress = "FLASH_LOAN_ARBITRAGE_CONTRACT_ADDRESS";
+
+// Instanzen der Smart Contracts
+const priceConsumer = new ethers.Contract(chainlinkPriceConsumerAddress, ChainlinkABI, provider);
+const flashLoanArbitrage = new ethers.Contract(flashLoanArbitrageAddress, FlashLoanArbitrageABI, wallet);
+
+// Funktion zur Überprüfung von Arbitrage-Möglichkeiten
+async function checkArbitrage() {
+    try {
+        // Beispiel: Abruf von Preisen
+        const priceA = await priceConsumer.getLatestPrice(); // Chainlink-Preis A
+        const priceB = await fetch("https://api.exchangeB.com/price"); // Preis von einer anderen API
+
+        console.log(`Price A: ${ethers.utils.formatUnits(priceA, 8)}, Price B: ${priceB}`);
+
+        // Arbitrage-Bedingung prüfen
+        if (priceA < priceB) {
+            console.log("Arbitrage opportunity detected!");
+
+            // Smart Contract aufrufen, um Arbitrage auszuführen
+            const tx = await flashLoanArbitrage.executeArbitrage(priceA, priceB, {
+                gasLimit: 300000,
+            });
+            console.log(`Transaction sent: ${tx.hash}`);
+            await tx.wait();
+            console.log("Arbitrage executed successfully!");
+        } else {
+            console.log("No arbitrage opportunity.");
+        }
+    } catch (error) {
+        console.error("Error checking arbitrage:", error);
+    }
+}
+
+// Arbitrage-Bot in Intervallen ausführen
+setInterval(checkArbitrage, 60000); // Alle 60 Sekunden
