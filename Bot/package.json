@@ -1,0 +1,16 @@
+{
+  "name": "flash-loan-arbitrage-bot",
+  "version": "1.0.0",
+  "description": "Off-chain bot to check arbitrage opportunities and interact with FlashLoanArbitrage smart contract.",
+  "main": "arbitrageBot.js",
+  "scripts": {
+    "start": "node arbitrageBot.js"
+  },
+  "dependencies": {
+    "ethers": "^6.0.0",
+    "axios": "^1.3.4",
+    "dotenv": "^16.0.3"
+  },
+  "author": "NorthWest999",
+  "license": "MIT"
+}
